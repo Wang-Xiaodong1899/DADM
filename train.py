@@ -202,8 +202,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
 
-    args.s_dset_path = f'data/office-home/labeled_source_images_{args.s}.txt'
-    args.t_dset_path = f'data/office-home/labeled_source_images_{args.t}.txt'
+    args.s_dset_path = f'data/{args.dset}/labeled_source_images_{args.s}.txt'
+    args.t_dset_path = f'data/{args.dset}/labeled_source_images_{args.t}.txt'
 
     # train config
     config = {}
