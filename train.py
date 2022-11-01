@@ -69,8 +69,8 @@ def train(config):
     #prep_dict["source"] = prep.image_target(**config["prep"]['params'])
     #prep_dict["target"] = prep.image_target(**config["prep"]['params'])
     #prep_dict["test"] = prep.image_test(**config["prep"]['params'])
-    root = '/home/dataset'
-    if config['dataset']=='office'
+    root = '/home/v-xiaodwang/dataset'
+    if config['dataset']=='office':
         root = os.path.join(root, 'office')
     elif config['dataset'] == 'office-home':
         root = os.path.join(root, 'office-home')
