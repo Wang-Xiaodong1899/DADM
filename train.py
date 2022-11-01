@@ -6,16 +6,16 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import network
+from module import network
 import module.pre_process as prep
 from torch.utils.data import DataLoader
-import lr_schedule
 from module import data_list, lr_schedule
 from module.data_list import ImageList
 from torch.autograd import Variable
 import random
 import pdb
 import math
+from tqdm import trange
 
 
 def image_classification_test(loader, model):
@@ -69,21 +69,25 @@ def train(config):
     #prep_dict["source"] = prep.image_target(**config["prep"]['params'])
     #prep_dict["target"] = prep.image_target(**config["prep"]['params'])
     #prep_dict["test"] = prep.image_test(**config["prep"]['params'])
-
+    root = '/home/dataset'
+    if config['dataset']=='office'
+        root = os.path.join(root, 'office')
+    elif config['dataset'] == 'office-home':
+        root = os.path.join(root, 'office-home')
     ## prepare data
     train_bs = data_config["source"]["batch_size"]
     test_bs = data_config["test"]["batch_size"]
     dsets["source"] = ImageList(open(data_config["source"]["list_path"]).readlines(), \
-                                transform=prep_dict["source"])
+                                transform=prep_dict["source"], root=root)
     dset_loaders["source"] = DataLoader(dsets["source"], batch_size=train_bs, \
             shuffle=True, num_workers=4, drop_last=True)
     dsets["target"] = ImageList(open(data_config["target"]["list_path"]).readlines(), \
-                                transform=prep_dict["target"])
+                                transform=prep_dict["target"], root=root)
     dset_loaders["target"] = DataLoader(dsets["target"], batch_size=train_bs, \
             shuffle=True, num_workers=4, drop_last=True)
 
     dsets["test"] = ImageList(open(data_config["test"]["list_path"]).readlines(), \
-                            transform=prep_dict["test"])
+                            transform=prep_dict["test"], root=root)
     dset_loaders["test"] = DataLoader(dsets["test"], batch_size=test_bs, \
                                 shuffle=False, num_workers=4)
 
@@ -114,7 +118,7 @@ def train(config):
     len_train_target = len(dset_loaders["target"])
     transfer_loss_value = classifier_loss_value = total_loss_value = 0.0
     best_acc = 0.0
-    for i in range(config["num_iterations"]):
+    for i in trange(config["num_iterations"]):
         #test
         if i % config["test_interval"] == config["test_interval"] - 1:
             base_network.train(False)
@@ -158,7 +162,8 @@ def train(config):
 
         #loss calculation
         classifier_loss = nn.CrossEntropyLoss()(outputs_source, labels_source)
-        _, s_tgt, _ = torch.svd(softmax_tgt)
+        #TODO will crash
+        # _, s_tgt, _ = torch.svd(softmax_tgt)
         if config["method"]=="BNM":
             transfer_loss = -torch.mean(s_tgt)
         elif config["method"]=="BFM":
@@ -183,8 +188,8 @@ if __name__ == "__main__":
     parser.add_argument('--gpu_id', type=str, nargs='?', default='0', help="device id to run")
     parser.add_argument('--net', type=str, default='ResNet50', help="Options: ResNet50")
     parser.add_argument('--dset', type=str, default='office-home', help="The dataset or source dataset used")
-    parser.add_argument('--s_dset_path', type=str, default='data/office-home/labeled_source_images_Art.txt', help="The source dataset path list")
-    parser.add_argument('--t_dset_path', type=str, default='data/office-home/labeled_source_images_Clipart.txt', help="The target dataset path list")
+    parser.add_argument('--s', type=str, default='Art', help="The source dataset path list")
+    parser.add_argument('--t', type=str, default='Clipart', help="The target dataset path list")
     parser.add_argument('--test_interval', type=int, default=500, help="interval of two continuous test phase")
     parser.add_argument('--snapshot_interval', type=int, default=5000, help="interval of two continuous output model")
     parser.add_argument('--print_num', type=int, default=100, help="interval of two print loss")
@@ -196,6 +201,9 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=36, help="batch size")
     args = parser.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_id
+
+    args.s_dset_path = f'data/office-home/labeled_source_images_{args.s}.txt'
+    args.t_dset_path = f'data/office-home/labeled_source_images_{args.t}.txt'
 
     # train config
     config = {}
