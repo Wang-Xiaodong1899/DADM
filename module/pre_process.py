@@ -4,7 +4,6 @@ import os
 from PIL import Image, ImageOps
 import numbers
 import torch
-from randaugment import RandAugmentMC
 
 class ResizeImage():
     def __init__(self, size):
@@ -137,39 +136,29 @@ class CenterCrop(object):
 
 
 def image_train(resize_size=256, crop_size=224, alexnet=False):
-  if not alexnet:
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+  normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                    std=[0.229, 0.224, 0.225])
-  else:
-    normalize = Normalize(meanfile='./ilsvrc_2012_mean.npy')
   return  transforms.Compose([
         transforms.Resize((resize_size,resize_size)),
-        transforms.RandomResizedCrop(crop_size),
         transforms.RandomHorizontalFlip(),
+        transforms.RandomResizedCrop(crop_size),
         transforms.ToTensor(),
         normalize
     ])
-
 def image_target(resize_size=256, crop_size=224, alexnet=False):
-  if not alexnet:
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+  normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                    std=[0.229, 0.224, 0.225])
-  else:
-    normalize = Normalize(meanfile='./ilsvrc_2012_mean.npy')
   return  transforms.Compose([
         transforms.Resize((resize_size,resize_size)),
-        transforms.RandomCrop(crop_size),
+        transforms.RandomCrop(224),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         normalize
     ])
 
 def image_test(resize_size=256, crop_size=224, alexnet=False):
-  if not alexnet:
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+  normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                    std=[0.229, 0.224, 0.225])
-  else:
-    normalize = Normalize(meanfile='./ilsvrc_2012_mean.npy')
   start_first = 0
   start_center = (resize_size - crop_size - 1) / 2
   start_last = resize_size - crop_size - 1
@@ -180,122 +169,3 @@ def image_test(resize_size=256, crop_size=224, alexnet=False):
     transforms.ToTensor(),
     normalize
   ])
-
-class TransformTwo_train(object):
-    def __init__(self):
-        self.mean=[0.485, 0.456, 0.406]
-        self.std=[0.229, 0.224, 0.225]
-        self.weak = transforms.Compose([
-            transforms.Resize((256, 256)),
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip()
-            ])
-        self.strong = transforms.Compose([
-            transforms.Resize((256, 256)),
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            RandAugmentMC(n=2, m=10)])
-        self.normalize = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=self.mean, std=self.std)])
-    def __call__(self, x):
-        weak = self.weak(x)
-        strong = self.strong(x)
-        return self.normalize(weak), self.normalize(strong)
-
-class TransformTwo_target(object):
-    def __init__(self):
-        self.mean=[0.485, 0.456, 0.406]
-        self.std=[0.229, 0.224, 0.225]
-        self.weak = transforms.Compose([
-            transforms.Resize((256,256)),
-            transforms.RandomCrop(224),
-            transforms.RandomHorizontalFlip()
-            ])
-        self.strong = transforms.Compose([
-            transforms.Resize((256,256)),
-            transforms.RandomCrop(224),
-            transforms.RandomHorizontalFlip(),
-            RandAugmentMC(n=2, m=10)])
-        self.normalize = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=self.mean, std=self.std)])
-
-    def __call__(self, x):
-        weak = self.weak(x)
-        strong = self.strong(x)
-        return self.normalize(weak), self.normalize(strong)
-
-
-def image_test_10crop(resize_size=256, crop_size=224, alexnet=False):
-    if not alexnet:
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                   std=[0.229, 0.224, 0.225])
-    else:
-        normalize = Normalize(meanfile='./ilsvrc_2012_mean.npy')
-    start_first = 0
-    start_center = (resize_size - crop_size - 1) / 2
-    start_last = resize_size - crop_size - 1
-    data_transforms = [
-        transforms.Compose([
-        ResizeImage(resize_size),ForceFlip(),
-        PlaceCrop(crop_size, start_first, start_first),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),ForceFlip(),
-        PlaceCrop(crop_size, start_last, start_last),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),ForceFlip(),
-        PlaceCrop(crop_size, start_last, start_first),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),ForceFlip(),
-        PlaceCrop(crop_size, start_first, start_last),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),ForceFlip(),
-        PlaceCrop(crop_size, start_center, start_center),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),
-        PlaceCrop(crop_size, start_first, start_first),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),
-        PlaceCrop(crop_size, start_last, start_last),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),
-        PlaceCrop(crop_size, start_last, start_first),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),
-        PlaceCrop(crop_size, start_first, start_last),
-        transforms.ToTensor(),
-        normalize
-        ]),
-        transforms.Compose([
-        ResizeImage(resize_size),
-        PlaceCrop(crop_size, start_center, start_center),
-        transforms.ToTensor(),
-        normalize
-        ])
-    ]
-    return data_transforms
